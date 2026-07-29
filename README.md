@@ -5,25 +5,29 @@
 
 ---
 
-## PASO 1: Instalación de Conda y Antigravity
+> **Nota importante**: Si ya has instalado previamente las herramientas (PASO 1) y configurado el entorno virtual `lpv2026-2` (PASO 2) en tu equipo, para iniciar un nuevo proyecto salta directamente al **PASO 3**.
 
-### 1. Instalación de Conda (Miniconda / Anaconda)
-- Descargar e instalar [Miniconda](https://docs.conda.io/en/latest/miniconda.html) o [Anaconda](https://www.anaconda.com/products/distribution).
-- Durante la instalación en Windows, se recomienda habilitar la opción de agregar Conda a las variables de entorno (PATH) o utilizar la consola **Anaconda Prompt**.
+---
+
+## PASO 1: Instalación de Miniconda y Antigravity IDE
+
+### 1. Instalación de Miniconda
+- Descargar e instalar el instalador oficial de [Miniconda](https://docs.anaconda.com/miniconda/).
+- Durante la instalación en Windows, se recomienda habilitar la opción de agregar Conda al PATH o utilizar la consola de Miniconda.
 - Verificar la correcta instalación ejecutando en la terminal:
 ```bash
 conda --version
 ```
 
-### 2. Instalación de Antigravity
-- Descargar e instalar la aplicación/IDE **Antigravity**.
+### 2. Instalación de Antigravity IDE
+- Descargar e instalar la aplicación/IDE **Antigravity IDE**.
 - Abrir la aplicación y verificar la configuración inicial de la consola y la integración con el sistema.
 
 ---
 
 ## PASO 2: Crear entorno virtual con Conda
 
-1. Abrir la terminal o consola de Windows (o Anaconda Prompt).
+1. Abrir la terminal o consola de Windows.
 
 2. Crear un entorno virtual con Conda:
 
@@ -43,13 +47,13 @@ conda activate lpv2026-2
 pip install poetry
 ```
 
-5. Configurar Poetry para que **NO cree un entorno virtual adicional** y use el entorno Conda activo:
+5. Configurar Poetry para que **NO cree un entorno virtual adicional** y utilice el entorno Conda activo:
 
 ```bash
 poetry config virtualenvs.create false --local
 ```
 
-> Nota: Este paso es importante para evitar que Poetry cree un `.venv` independiente.
+> Nota: Este paso es fundamental para evitar que Poetry cree un `.venv` independiente.
 
 ---
 
@@ -74,7 +78,7 @@ conda activate lpv2026-2
 poetry init --no-interaction
 ```
 
-4. Agregar directorio `src` al workspace:
+4. Agregar el directorio `src` al workspace:
 
 ```bash
 mkdir src
