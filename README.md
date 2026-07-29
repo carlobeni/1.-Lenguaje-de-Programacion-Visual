@@ -67,17 +67,17 @@ A continuación se detalla la ponderación sobre 100 puntos de las actividades e
 
 ## Trabajos Prácticos, Cuestionarios y Evaluaciones
 
-| Evaluación | Plazo / Periodo | Peso | Descripción / Alcance |
-|---|---|:---:|---|
-| **Cuestionario 1** | | | |
-| **Cuestionario 2** | | | |
-| **Cuestionario 3** | | | |
-| **Cuestionario 4** | | | |
-| **Cuestionario 5** | | | |
-| **Cuestionario 6** | | | |
-| **TP 1** | Semanas 1 a 4 | 5 pts | **Web scraping en tiempo real**: Extracción y captura de datos web en tiempo real. |
-| **TP 2** | Semana 5 hasta el 1EP | 5 pts | **Bot de IA con API (sin interfaz gráfica)**: Creación de un Bot de Inteligencia Artificial accesible mediante API backend. |
-| **1er Parcial** | Semana 7 | 20 pts | **Backend de datos poblacionales del PY**: Desarrollo práctico de backend para procesamiento de datos poblacionales de Paraguay. |
-| **TP 3** | Semanas 8 a 10 | 5 pts | **Estructura gráfica base de todo el proyecto**: Diseño e implementación de la interfaz de usuario inicial y arquitectura gráfica. |
-| **2do Parcial (EP2)** | Semana 14 | 20 pts | **Entrega de avances del proyecto**: Evaluación de avances. Si se realiza la entrega completa, se exonera el Examen Final. |
-| **Proyecto Final** | Final del semestre | 35 pts | Integración final del proyecto mecatrónico. |
+| Evaluación | Peso | Descripción / Alcance |
+|---|:---:|---|
+| **Cuestionario 1** | | |
+| **Cuestionario 2** | | |
+| **Cuestionario 3** | | |
+| **Cuestionario 4** | | |
+| **Cuestionario 5** | | |
+| **Cuestionario 6** | | |
+| **TP 1** | 5 pts | **Web scraping en tiempo real**: Extracción y captura de datos web en tiempo real. |
+| **TP 2** | 5 pts | **Bot de IA con API (sin interfaz gráfica)**: Creación de un Bot de Inteligencia Artificial accesible mediante API backend. |
+| **1er Parcial** | 20 pts | **Backend de datos poblacionales del PY**: Desarrollo práctico de backend para procesamiento de datos poblacionales de Paraguay. |
+| **TP 3** | 5 pts | **Estructura gráfica base de todo el proyecto**: Diseño e implementación de la interfaz de usuario inicial y arquitectura gráfica. |
+| **2do Parcial (EP2)** | 20 pts | **Entrega de avances del proyecto**: Evaluación de avances. Si se realiza la entrega completa, se exonera el Examen Final. |
+| **Proyecto Final** | 35 pts | Integración final del proyecto mecatrónico. |
