@@ -12,7 +12,7 @@
 ## PASO 1: Instalación de Miniconda y Antigravity IDE
 
 ### 1. Instalación de Miniconda
-- Descargar e instalar el instalador oficial de [Miniconda](https://docs.anaconda.com/miniconda/).
+- Descargar e instalar el instalador oficial de <a href="https://docs.anaconda.com/miniconda/" target="_blank" rel="noopener noreferrer">Miniconda</a>.
 - Durante la instalación en Windows, se recomienda habilitar la opción de agregar Conda al PATH o utilizar la consola de Miniconda.
 - Verificar la correcta instalación ejecutando en la terminal:
 ```bash
@@ -20,8 +20,10 @@ conda --version
 ```
 
 ### 2. Instalación de Antigravity IDE
-- Descargar e instalar la aplicación/IDE **Antigravity IDE**.
+- Descargar e instalar el entorno de desarrollo oficial <a href="https://antigravity.google.com" target="_blank" rel="noopener noreferrer">Antigravity IDE</a>.
 - Abrir la aplicación y verificar la configuración inicial de la consola y la integración con el sistema.
+
+> **Nota sobre Asistencia de Inteligencia Artificial**: **Antigravity IDE** cuenta con integración completa con modelos de **Gemini** y diversos modelos de **Claude**, lo cual facilitará enormemente el proceso de desarrollo de código y prototipado. Sin embargo, se remarca que es fundamental que el estudiante comprenda en profundidad la estructura, lógica y partes fundamentales de cada apartado de los proyectos desarrollados durante la cátedra.
 
 ---
 
