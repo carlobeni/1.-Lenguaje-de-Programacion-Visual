@@ -1,0 +1,105 @@
+# Lenguaje de Programación Visual  
+### Ingeniería Mecatrónica
+
+**Manual de creación de Entorno Virtual con Conda y creación de workspace con Poetry**
+
+---
+
+## Crear entorno virtual con Conda
+
+Habiendo instalado [Anaconda](https://www.anaconda.com/products/distribution) o [Miniconda](https://docs.conda.io/en/latest/miniconda.html), para crear un entorno virtual se tienen los siguientes pasos:
+
+1. Abrir la terminal o consola de Windows.
+
+2. Crear un entorno virtual con Conda:
+
+```bash
+conda create -n lpv2026-1 python=3.12 -y
+```
+
+3. Activar el entorno virtual:
+
+```bash
+conda activate lpv2026-1
+```
+
+4. Instalar Poetry dentro del entorno virtual activo:
+
+```bash
+pip install poetry
+```
+
+5. Configurar Poetry para que **NO cree un entorno virtual adicional** y use el entorno Conda activo:
+
+```bash
+poetry config virtualenvs.create false --local
+```
+
+> ⚠️ Este paso es importante para evitar que Poetry cree un `.venv` independiente.
+
+
+## Crear un workspace con Poetry integrado al entorno `lpv2026-1`
+
+1. Crear el directorio del proyecto:
+
+```bash
+mkdir projectName
+cd projectName
+```
+
+
+2. Activar el entorno virtual:
+
+```bash
+conda activate lpv2026-1
+```
+
+3. Inicializar Poetry en la raíz del proyecto (`\projectName`). Esto generará el archivo `pyproject.toml`:
+
+```bash
+poetry init --no-interaction
+```
+
+5. Agregar directorio src al workspace:
+
+```bash
+mkdir src
+```
+
+6. Instalar de dependecias y agregarlas al poetry:
+
+Ejemplo:
+```bash
+poetry add numpy matplotlib
+```
+
+
+> ⚠️ Si es un proyecto fue clonado o descargado y ya cuenta con un archivo `pyproject.toml`, para instalar las dependencias
+ ```bash
+poetry install
+```
+
+Las dependencias se instalarán dentro del entorno `lpv2026-1` y se registrarán en `pyproject.toml`.
+
+
+7. Ejemplo de archivo principal, crear un archivo `main.py` dentro del directorio `src` con el siguiente contenido:
+
+```python
+# Codigo Hello World de ejemplo con numpy y matplotlib
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.linspace(0, 2 * np.pi, 100)
+y = np.sin(x)
+
+plt.plot(x, y)
+plt.title("Grafica de sin(x)")
+plt.show()
+```
+
+8. Ejecutar el proyecto desde la raíz del proyecto:
+
+```bash
+python src/main.py
+```
