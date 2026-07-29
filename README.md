@@ -1,15 +1,29 @@
 # Lenguaje de Programación Visual  
 ### Ingeniería Mecatrónica
 
-**Manual de creación de Entorno Virtual con Conda y creación de workspace con Poetry**
+**Manual de instalación de herramientas, creación de entorno virtual con Conda y workspace con Poetry**
 
 ---
 
-## Crear entorno virtual con Conda
+## PASO 1: Instalación de Conda y Antigravity
 
-Habiendo instalado [Anaconda](https://www.anaconda.com/products/distribution) o [Miniconda](https://docs.conda.io/en/latest/miniconda.html), para crear un entorno virtual se siguen los siguientes pasos:
+### 1. Instalación de Conda (Miniconda / Anaconda)
+- Descargar e instalar [Miniconda](https://docs.conda.io/en/latest/miniconda.html) o [Anaconda](https://www.anaconda.com/products/distribution).
+- Durante la instalación en Windows, se recomienda habilitar la opción de agregar Conda a las variables de entorno (PATH) o utilizar la consola **Anaconda Prompt**.
+- Verificar la correcta instalación ejecutando en la terminal:
+```bash
+conda --version
+```
 
-1. Abrir la terminal o consola de Windows.
+### 2. Instalación de Antigravity
+- Descargar e instalar la aplicación/IDE **Antigravity**.
+- Abrir la aplicación y verificar la configuración inicial de la consola y la integración con el sistema.
+
+---
+
+## PASO 2: Crear entorno virtual con Conda
+
+1. Abrir la terminal o consola de Windows (o Anaconda Prompt).
 
 2. Crear un entorno virtual con Conda:
 
@@ -37,8 +51,9 @@ poetry config virtualenvs.create false --local
 
 > Nota: Este paso es importante para evitar que Poetry cree un `.venv` independiente.
 
+---
 
-## Crear un workspace con Poetry integrado al entorno `lpv2026-2`
+## PASO 3: Crear workspace con Poetry integrado al entorno `lpv2026-2`
 
 1. Crear el directorio del proyecto:
 
