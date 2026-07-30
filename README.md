@@ -32,9 +32,9 @@ A continuación se detalla la ponderación sobre 100 puntos de las actividades e
 |---|---|:---:|
 | **Cuestionarios** | 6 Cuestionarios (distribuidos cada ~2 semanas) | 10 pts (Total) |
 | **Trabajos Prácticos (TPs)** | 3 Trabajos Prácticos (5 pts c/u) | 15 pts |
-| **1er Parcial** | Evaluación de Backend de datos poblacionales | 20 pts |
-| **2do Parcial** | Evaluación teórica/práctica (EP2) | 20 pts |
-| **Proyecto Final** | Desarrollo e integración final del sistema mecatrónico | 35 pts |
+| **1er Parcial** | Evaluación de Backend de datos poblacionales | 25 pts |
+| **2do Parcial** | Evaluación teórica/práctica (EP2) | 25 pts |
+| **Proyecto Final** | Desarrollo e integración final del sistema mecatrónico | 25 pts |
 | **Total** | | **100 pts** |
 
 ### Criterios de Exoneración
