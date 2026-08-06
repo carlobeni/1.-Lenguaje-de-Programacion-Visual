@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "aqi-monitor"
+version = "0.1.0"
+description = "Sistema de Monitoreo de Calidad del Aire (AQI) y Reverse Geocoding usando POO"
+authors = ["Auxiliar LPV <auxiliar@ing.una.py>"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.31.0"
+
+[tool.poetry.scripts]
+start = "src.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
