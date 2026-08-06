@@ -1,4 +1,22 @@
+# PDF y documentos locales
 *.pdf
 Plan de clases 2026-02.pdf
+
+# Entornos y Variables de Entorno (Protección de API Keys)
+.env
+.env.*
+*.env
+!.env.example
+
+# Archivos compilados y cachés de Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Poetry y entornos virtuales
+.venv/
+dist/
+build/

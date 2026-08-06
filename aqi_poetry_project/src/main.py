@@ -1,6 +1,31 @@
+import os
 import sys
-from .location import Location
-from .services import ReverseGeocodeService, AirQualityService
+
+# Función auxiliar para cargar variables de entorno desde un archivo .env
+def load_env(env_file=".env"):
+    """Carga variables desde un archivo .env si existe."""
+    if os.path.exists(env_file):
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, val = line.split("=", 1)
+                    os.environ.setdefault(key.strip(), val.strip())
+
+# Cargar .env desde el directorio del proyecto o el directorio raíz
+load_env()
+load_env(os.path.join(os.path.dirname(__file__), "..", ".env"))
+
+try:
+    from .location import Location
+    from .services import ReverseGeocodeService, AirQualityService
+except ImportError:
+    try:
+        from src.location import Location
+        from src.services import ReverseGeocodeService, AirQualityService
+    except ImportError:
+        from location import Location
+        from services import ReverseGeocodeService, AirQualityService
 
 if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
     try:
@@ -12,10 +37,13 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
 class AirQualityMonitorApp:
     """Clase principal que coordina los servicios y genera la salida por consola."""
     
-    AUTOCOMPLETE_API_KEY = 'e94fd042131f45f18a7a4c89d5b8276d'
-    AIR_QUALITY_API_KEY = '2f9f437fc127edba8c7068fe3bd209f4'
+    # Obtener API Keys estrictamente desde las variables de entorno / archivo .env
+    AUTOCOMPLETE_API_KEY = os.getenv("AUTOCOMPLETE_API_KEY")
+    AIR_QUALITY_API_KEY = os.getenv("AIR_QUALITY_API_KEY")
 
     def __init__(self):
+        if not self.AUTOCOMPLETE_API_KEY or not self.AIR_QUALITY_API_KEY:
+            raise ValueError("Error: Se requieren las variables de entorno AUTOCOMPLETE_API_KEY y AIR_QUALITY_API_KEY en el archivo .env")
         self.__geocode_service = ReverseGeocodeService(self.AUTOCOMPLETE_API_KEY)
         self.__aqi_service = AirQualityService(self.AIR_QUALITY_API_KEY)
 

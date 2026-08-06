@@ -1,6 +1,15 @@
-import requests
+import urllib.request
+import urllib.error
+import json
 from typing import Dict, Any
-from .location import Location
+
+try:
+    from .location import Location
+except ImportError:
+    try:
+        from src.location import Location
+    except ImportError:
+        from location import Location
 
 
 class ReverseGeocodeService:
@@ -12,21 +21,24 @@ class ReverseGeocodeService:
     def get_readable_location(self, location: Location) -> str:
         """Transforma lat/lon en un nombre de ubicación legible para el usuario."""
         lat, lon = location.to_tuple()
-        params = {"lat": lat, "lon": lon, "apiKey": self.__api_key}
+        url = f"{self.__endpoint}?lat={lat}&lon={lon}&apiKey={self.__api_key}"
 
         try:
-            response = requests.get(self.__endpoint, params=params, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                features = data.get("features", [])
-                if features:
-                    props = features[0].get("properties", {})
-                    return props.get("formatted", "Ubicación desconocida")
-                return "Ubicación no encontrada"
-            else:
-                raise RuntimeError(f"Error en Geoapify API. Código HTTP: {response.status_code}")
-        except requests.RequestException as e:
-            raise RuntimeError(f"Error de red al conectar con Geoapify: {e}")
+            req = urllib.request.Request(url, headers={'User-Agent': 'PythonAQIMonitor/1.0'})
+            with urllib.request.urlopen(req) as response:
+                if response.status == 200:
+                    data = json.loads(response.read().decode('utf-8'))
+                    features = data.get("features", [])
+                    if features:
+                        props = features[0].get("properties", {})
+                        return props.get("formatted", "Ubicación desconocida")
+                    return "Ubicación no encontrada"
+                else:
+                    raise RuntimeError(f"Error en Geoapify API. Código HTTP: {response.status}")
+        except urllib.error.URLError as e:
+            raise RuntimeError(f"Error de red al conectar con Geoapify: {e.reason}")
+        except Exception as e:
+            raise RuntimeError(f"Error inesperado en Reverse Geocoding: {e}")
 
 
 class AirQualityService:
@@ -58,13 +70,17 @@ class AirQualityService:
     def fetch_air_quality(self, location: Location) -> Dict[str, Any]:
         """Obtiene el índice AQI y los datos de contaminantes desde OpenWeatherMap."""
         lat, lon = location.to_tuple()
-        params = {"lat": lat, "lon": lon, "appid": self.__api_key}
+        url = f"{self.__endpoint}?lat={lat}&lon={lon}&appid={self.__api_key}"
 
         try:
-            response = requests.get(self.__endpoint, params=params, timeout=10)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                raise RuntimeError(f"Error en OpenWeatherMap API. Código HTTP: {response.status_code}")
-        except requests.RequestException as e:
-            raise RuntimeError(f"Error de red al conectar con OpenWeatherMap: {e}")
+            req = urllib.request.Request(url, headers={'User-Agent': 'PythonAQIMonitor/1.0'})
+            with urllib.request.urlopen(req) as response:
+                if response.status == 200:
+                    data = json.loads(response.read().decode('utf-8'))
+                    return data
+                else:
+                    raise RuntimeError(f"Error en OpenWeatherMap API. Código HTTP: {response.status}")
+        except urllib.error.URLError as e:
+            raise RuntimeError(f"Error de red al conectar con OpenWeatherMap: {e.reason}")
+        except Exception as e:
+            raise RuntimeError(f"Error al consultar calidad del aire: {e}")

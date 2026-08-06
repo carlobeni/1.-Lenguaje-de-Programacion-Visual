@@ -5,6 +5,25 @@
 
 ---
 
+## Requisitos Previos y Configuración del Entorno
+
+Antes de comenzar con la clase y ejecutar los ejemplos en Python o Jupyter Notebooks, asegúrese de activar el entorno virtual de la asignatura y registrar el Kernel correspondiente en Jupyter ejecutando los siguientes comandos preliminares en su terminal:
+
+```bash
+# 1. Activar el entorno virtual de la materia
+conda activate lpv2026-2
+
+# 2. Instalar ipykernel para integración con Jupyter
+pip install ipykernel
+
+# 3. Registrar el entorno virtual lpv2026-2 como Kernel en Jupyter
+python -m ipykernel install --user --name lpv2026-2 --display-name "Python (lpv2026-2)"
+```
+
+> **Nota:** Al abrir cualquier archivo Notebook (`.ipynb`) en Jupyter Notebook, JupyterLab o VS Code, seleccione el Kernel denominado **`Python (lpv2026-2)`** en la esquina superior derecha para asegurar que el código se ejecute con el entorno virtual del curso y sus dependencias.
+
+---
+
 ## 1. Protocolos de Comunicación
 
 En mecatrónica y sistemas embebidos, un **protocolo de comunicación** es un conjunto formal de reglas, sintaxis, semántica y sincronización que gobiernan el intercambio de datos entre dos o más entidades (como microcontroladores, sensores, actuadores, computadoras y servidores).
@@ -25,112 +44,359 @@ Los protocolos de comunicación se pueden clasificar según su nivel en la arqui
 
 ---
 
-### 1.2 Protocolos Seriados y Físicos de Bajo Nivel
+### 1.2 Protocolos Seriados y Físicos de Bajo Nivel: Funciones y Ejemplos
 
 #### A. UART (Universal Asynchronous Receiver-Transmitter)
-- **Características:** Asíncrono (sin línea de reloj dedicada), Full-Duplex (transmisión y recepción simultánea).
+- **Características:** Protocolo asíncrono (sin línea de reloj compartida), Full-Duplex.
 - **Líneas físicas:** `TX` (Transmit), `RX` (Receive) y `GND` (Tierra común).
-- **Parámetros clave:** Baudrate (ej. 9600, 115200 bps), bits de datos (8), paridad (Ninguna), bits de parada (1).
-- **Aplicación:** Comunicación PC con Arduino/ESP32, módulos Bluetooth HC-05, módulos GPS Neo-6M.
+- **Funciones y Métodos Principales (`pySerial`):**
+  - `serial.Serial(port, baudrate, timeout)`: Inicializa y abre el puerto serie especificado.
+  - `ser.write(data)`: Envía bytes a través de la línea `TX`.
+  - `ser.read(size)` / `ser.readline()`: Lee una cantidad fija de bytes o una línea terminada en `\n` desde la línea `RX`.
+  - `ser.flush()` / `ser.reset_input_buffer()`: Limpia el búfer de entrada o salida.
+  - `ser.close()`: Cierra la conexión serie.
 
 ```python
-# Ejemplo: Lectura de datos serie por UART usando pySerial
+# Ejemplo: Configuración y comunicación bidireccional por UART
 import serial
 
-try:
-    # Configurar puerto serie UART
-    ser = serial.Serial(port='COM3', baudrate=115200, timeout=1.0)
-    print(f"Puerto {ser.name} abierto exitosamente.")
-    
-    # Enviar comando de prueba
-    ser.write(b"PING\n")
-    
-    # Leer respuesta
-    linea = ser.readline().decode('utf-8').strip()
-    print(f"Respuesta recibida por UART: {linea}")
-    
-    ser.close()
-except serial.SerialException as e:
-    print(f"Error de comunicación UART: {e}")
+def ejemplo_uart():
+    try:
+        # 1. Configurar e inicializar puerto UART
+        ser = serial.Serial(port='COM3', baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=1.0)
+        print(f"[UART] Puerto {ser.name} abierto a {ser.baudrate} bps.")
+
+        # 2. Transmitir comando binario/texto
+        comando = b"GET_STATUS\n"
+        bytes_enviados = ser.write(comando)
+        print(f"[UART] Transmitidos {bytes_enviados} bytes: {comando.strip()}")
+
+        # 3. Leer respuesta del microcontrolador
+        respuesta = ser.readline().decode('utf-8', errors='ignore').strip()
+        print(f"[UART] Respuesta recibida: {respuesta}")
+
+        # 4. Cerrar puerto
+        ser.close()
+    except serial.SerialException as e:
+        print(f"[UART Error] Fallo en comunicación serie: {e}")
 ```
 
 #### B. I2C (Inter-Integrated Circuit)
-- **Características:** Síncrono, Half-Duplex, arquitectura Maestro-Esclavo (Master-Slave) con direccionamiento de 7 u 10 bits.
-- **Líneas físicas:** `SDA` (Serial Data) y `SCL` (Serial Clock) impulsados mediante resistencias *pull-up*.
-- **Ventajas:** Permite conectar decenas de dispositivos esclavos usando solo 2 líneas de comunicación.
-- **Aplicación:** Sensor de orientación IMU MPU6050, barómetros BMP280, pantallas OLED SSD1306.
+- **Características:** Protocolo síncrono, Half-Duplex, arquitectura Maestro-Esclavo (Master-Slave) con direccionamiento de 7 u 10 bits.
+- **Líneas físicas:** `SDA` (Serial Data) y `SCL` (Serial Clock) impulsadas por resistencias *pull-up*.
+- **Funciones y Métodos Principales (`smbus2` / MicroPython `machine.I2C`):**
+  - `SMBus(bus_id)`: Abre el bus I2C del sistema (ej. `/dev/i2c-1`).
+  - `bus.write_byte_data(i2c_addr, register, value)`: Escribe un byte en un registro interno del esclavo.
+  - `bus.read_byte_data(i2c_addr, register)`: Lee un byte desde un registro específico.
+  - `bus.read_i2c_block_data(i2c_addr, register, length)`: Lee un bloque de múltiples bytes consecutivos.
+
+```python
+# Ejemplo: Lectura de un sensor I2C (ejemplo IMU / Barómetro)
+import smbus2
+
+def ejemplo_i2c():
+    BUS_ID = 1          # Bus I2C-1 en Raspberry Pi / Linux embebido
+    I2C_ADDR = 0x68     # Dirección de 7 bits del esclavo (ej. MPU6050)
+    REG_TEMP_HIGH = 0x41 # Registro donde inicia la lectura de temperatura
+
+    try:
+        bus = smbus2.SMBus(BUS_ID)
+        # Leer 2 bytes de datos consecutivos (MSB y LSB)
+        datos = bus.read_i2c_block_data(I2C_ADDR, REG_TEMP_HIGH, 2)
+        temp_raw = (datos[0] << 8) | datos[1]
+        print(f"[I2C] Lectura exitosa desde 0x{I2C_ADDR:X}: Bytes=[{datos[0]}, {datos[1]}], Valor Raw={temp_raw}")
+        bus.close()
+    except IOError as e:
+        print(f"[I2C Error] No se pudo comunicar con el dispositivo esclavo: {e}")
+```
 
 #### C. SPI (Serial Peripheral Interface)
-- **Características:** Síncrono, Full-Duplex, relación Maestro-Esclavo a muy alta velocidad (decenas de MHz).
-- **Líneas físicas:** 
-  - `MOSI` (Master Out Slave In)
-  - `MISO` (Master In Slave Out)
-  - `SCK` (Serial Clock)
-  - `CS` / `SS` (Chip Select / Slave Select)
-- **Ventajas:** Extremadamente rápido, bajo overhead de procesamiento.
-- **Aplicación:** Módulos de memoria MicroSD, controladores de pantallas TFT, transmisores NRF24L01+.
+- **Características:** Protocolo síncrono, Full-Duplex a muy alta velocidad (decenas de MHz).
+- **Líneas físicas:** `MOSI` (Master Out Slave In), `MISO` (Master In Slave Out), `SCK` (Clock), `CS` / `SS` (Chip Select).
+- **Funciones y Métodos Principales (`spidev`):**
+  - `spi.open(bus, device)`: Selecciona el bus y el pin Chip Select (`CS`).
+  - `spi.max_speed_hz = freq`: Define la frecuencia del reloj `SCK`.
+  - `spi.mode = mode`: Define la polaridad y fase del reloj (Modos 0, 1, 2, 3).
+  - `spi.xfer2(bytes)`: Realiza una transferencia bidireccional simultánea (envía y recibe datos al mismo tiempo).
+
+```python
+# Ejemplo: Transferencia de datos a alta velocidad con SPI
+import spidev
+
+def ejemplo_spi():
+    try:
+        spi = spidev.SpiDev()
+        spi.open(0, 0) # Bus SPI 0, Device CS 0
+        spi.max_speed_hz = 5000000 # 5 MHz
+        spi.mode = 0
+
+        # Transferir 3 bytes (envía comando y recibe respuesta simultáneamente)
+        datos_a_enviar = [0x9F, 0x00, 0x00] # Comando común para leer ID de memoria Flash SPI
+        datos_recibidos = spi.xfer2(datos_a_enviar)
+
+        print(f"[SPI] Enviados: {datos_a_enviar} -> Recibidos: {datos_recibidos}")
+        spi.close()
+    except Exception as e:
+        print(f"[SPI Error] Error en bus SPI: {e}")
+```
 
 #### D. CAN Bus (Controller Area Network)
-- **Características:** Asíncrono, diferencial (`CAN_H`, `CAN_L`), multimaestro con arbitraje no destructivo basado en prioridades de ID.
-- **Ventajas:** Gran inmunidad a interferencias electromagnéticas (EMI) y detección integrada de errores.
-- **Aplicación:** Diagnóstico automotriz (OBD-II), robótica industrial, control de motores con CANopen.
+- **Características:** Protocolo asíncrono diferencial (`CAN_H`, `CAN_L`), multimaestro con arbitraje no destructivo basado en prioridades de ID.
+- **Funciones y Métodos Principales (`python-can`):**
+  - `can.Bus(interface, channel, bitrate)`: Inicializa el controlador del bus CAN (ej. `socketcan`, `can0`).
+  - `can.Message(arbitration_id, data, is_extended_id)`: Construye un mensaje CAN con ID de arbitraje (11 o 29 bits) y payload de hasta 8 bytes.
+  - `bus.send(msg)`: Transmite un mensaje CAN al bus.
+  - `bus.recv(timeout)`: Bloquea la ejecución esperando la recepción de una trama CAN.
 
-#### E. RS-485 / Modbus
-- **Características:** Transmisión diferencial multipunto, ideal para distancias de hasta 1200 metros en entornos industriales.
-- **Aplicación:** Automatización industrial, lectura de variadores de frecuencia y PLCs mediante protocolo Modbus RTU.
+```python
+# Ejemplo: Envío y Recepción de tramas CAN Bus automotrices/robóticas
+import can
+
+def ejemplo_can():
+    try:
+        # Inicializar bus CAN virtual o físico
+        bus = can.Bus(interface='socketcan', channel='vcan0', bitrate=500000)
+
+        # Crear mensaje CAN (ID: 0x123, Payload: 4 bytes)
+        msg_tx = can.Message(arbitration_id=0x123, data=[0x01, 0x02, 0x03, 0x04], is_extended_id=False)
+        bus.send(msg_tx)
+        print(f"[CAN] Mensaje enviado con ID 0x{msg_tx.arbitration_id:X}")
+
+        # Esperar respuesta
+        msg_rx = bus.recv(timeout=1.0)
+        if msg_rx:
+            print(f"[CAN] Mensaje recibido ID 0x{msg_rx.arbitration_id:X}: Data={list(msg_rx.data)}")
+        else:
+            print("[CAN] Timeout: No se recibió respuesta en el tiempo límite.")
+    except can.CanError as e:
+        print(f"[CAN Error] Fallo en la interfaz CAN: {e}")
+```
+
+#### E. RS-485 / Modbus RTU
+- **Características:** Transmisión diferencial multipunto mediante par trenzado (`A`, `B`), ideal para ambientes industriales ruidosos y distancias de hasta 1200 metros.
 
 ---
 
-### 1.3 Protocolos de Red y Transporte (TCP vs UDP)
+### 1.3 Protocolos de Red y Transporte (TCP vs UDP): Funciones y Sockets
 
-En sistemas mecatrónicos distribuidos (como robots móviles conectados por Wi-Fi o Ethernet), la comunicación se realiza mediante sockets de red.
+En sistemas distribuidos y robótica móvil, los datos se transportan sobre IP usando **Sockets de red**.
 
-#### Tabla Comparativa: TCP vs UDP
+#### A. Funciones Clave de la API de Sockets (`socket` en Python)
 
-| Propiedad | TCP (Transmission Control Protocol) | UDP (User Datagram Protocol) |
+| Función / Método | Descripción | Protocolo |
 | --- | --- | --- |
-| **Conexión** | Orientado a conexión (Handshake 3 vías) | No orientado a conexión (Sin Handshake) |
-| **Confiabilidad** | Garantizada (Control de retransmisión y orden) | No garantizada (Los paquetes pueden perderse) |
-| **Velocidad / Latencia** | Mayor latencia (Overhead de control) | Mínima latencia (Ultra rápido) |
-| **Uso en Mecatrónica** | Comandos de control crítico, envío de archivos | Telemetría rápida, streaming de cámaras en drones |
+| `socket(AF_INET, SOCK_STREAM)` | Crea un socket para flujo continuo confiable. | **TCP** |
+| `socket(AF_INET, SOCK_DGRAM)` | Crea un socket de datagramas rápidos no orientados a conexión. | **UDP** |
+| `bind((host, port))` | Asocia el socket a una dirección IP y puerto local. | **TCP / UDP** |
+| `listen(backlog)` | Habilita el servidor para aceptar conexiones entrantes. | **TCP Servidor** |
+| `accept()` | Bloquea hasta que un cliente se conecta; retorna `(conn_socket, addr)`. | **TCP Servidor** |
+| `connect((host, port))` | Inicia el proceso de enlace (*3-way handshake*) con el servidor. | **TCP Cliente** |
+| `sendall(data)` / `recv(bufsize)` | Envía/recibe datos sobre una conexión establecida. | **TCP** |
+| `sendto(data, (host, port))` | Transmite un datagrama directamente a la dirección de destino. | **UDP** |
+| `recvfrom(bufsize)` | Recibe un datagrama y retorna `(data, sender_addr)`. | **UDP** |
+
+#### B. Ejemplo Comparativo: Sockets TCP y UDP en Python
 
 ```python
-# Ejemplo: Socket Servidor TCP en Python
 import socket
 
-def iniciar_servidor_tcp():
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('127.0.0.1', 8080))
-    server_socket.listen(1)
-    print("Servidor TCP a la espera de conexiones mecatrónicas...")
-    
-    conn, addr = server_socket.accept()
-    print(f"Conexión establecida desde: {addr}")
-    
+# --- EJEMPLO SERVIDOR Y CLIENTE TCP ---
+def servidor_tcp():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(('127.0.0.1', 9000))
+    server.listen(1)
+    print("[TCP Server] Esperando conexión...")
+    conn, addr = server.accept()
+    print(f"[TCP Server] Cliente conectado desde {addr}")
     data = conn.recv(1024)
-    print(f"Comando recibido: {data.decode('utf-8')}")
-    conn.sendall(b"ACK: Comando procesado")
-    
+    print(f"[TCP Server] Recibido: {data.decode()}")
+    conn.sendall(b"OK_TCP")
     conn.close()
-    server_socket.close()
+    server.close()
+
+# --- EJEMPLO RECEPTOR Y EMISOR UDP ---
+def emisor_udp():
+    client_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    mensaje = b"TELEMETRIA_DRON_XYZ"
+    client_udp.sendto(mensaje, ('127.0.0.1', 9001))
+    print(f"[UDP Emisor] Datagrama enviado ({len(mensaje)} B)")
+    client_udp.close()
 ```
 
 ---
 
-### 1.4 Protocolos de Capa de Aplicación e IoT
+### 1.4 Protocolo HTTP / HTTPS a Detalle
 
-#### A. HTTP / HTTPS (REST API)
-- Protocolo solicitud-respuesta basado en el modelo cliente-servidor. Utiliza métodos estándar (`GET`, `POST`, `PUT`, `DELETE`).
-- **Formato habitual de payload:** JSON o XML.
+El protocolo **HTTP (Hypertext Transfer Protocol)** y su versión segura **HTTPS (HTTP Secure)** constituyen la base de la comunicación web moderna y las arquitecturas de **APIs REST**.
 
-#### B. MQTT (Message Queuing Telemetry Transport)
+---
+
+#### A. Fundamentos y Mecanismo de Seguridad HTTPS (SSL/TLS)
+
+- **HTTP (Puerto 80):** Transmite datos en texto plano no cifrado. Cualquier nodo intermedio en la red puede interceptar e inspeccionar la información (*Man-in-the-Middle*).
+- **HTTPS (Puerto 443):** Añade una capa de cifrado sobre TCP mediante el protocolo **TLS (Transport Layer Security)** o su antecesor **SSL**.
+
+```
++-------------------------------------------------------------------------+
+|                  Capa de Aplicación (HTTP / JSON / REST)                |
++-------------------------------------------------------------------------+
+|                  Capa de Seguridad TLS/SSL (Cifrado)                    |
++-------------------------------------------------------------------------+
+|                  Capa de Transporte (TCP - Puerto 443)                  |
++-------------------------------------------------------------------------+
+|                  Capa de Red (IP)                                       |
++-------------------------------------------------------------------------+
+```
+
+##### Proceso del Handshake SSL/TLS:
+1. **Client Hello:** El cliente envía al servidor las versiones de TLS compatibles y algoritmos de cifrado (*Cipher Suites*).
+2. **Server Hello & Certificado:** El servidor responde enviando su **Certificado Digital X.509** firmado por una Autoridad de Certificación (CA) que contiene la **Llave Pública** del servidor.
+3. **Verificación del Certificado:** El cliente valida la autenticidad del certificado contra sus CAs de confianza registradas.
+4. **Intercambio de Llave Simétrica:** Mediante cifrado asimétrico (RSA o Elliptic Curve Diffie-Hellman), el cliente y el servidor generan y acuerdan una **Llave Simétrica de Sesión**.
+5. **Comunicación Cifrada:** A partir de ese instante, toda la transferencia HTTP se cifra y descifra mediante algoritmos simétricos ultrarrápidos (ej. AES-GCM-256).
+
+---
+
+#### B. Anatomía de una Solicitud (Request) y Respuesta (Response) HTTP/HTTPS
+
+##### 1. Estructura de una Solicitud HTTP (Request):
+- **Línea de Solicitud (Request Line):** Método + Ruta + Versión (ej. `GET /v1/geocode/reverse?lat=-25.28&lon=-57.64 HTTP/1.1`)
+- **Métodos (Verbos) HTTP Estándar:**
+  - `GET`: Solicita y obtiene recursos del servidor sin modificar el estado (idempotente).
+  - `POST`: Envía datos en el cuerpo para crear un nuevo recurso en el servidor.
+  - `PUT`: Reemplaza o actualiza completamente un recurso existente.
+  - `PATCH`: Aplica modificaciones parciales a un recurso.
+  - `DELETE`: Elimina el recurso especificado.
+- **Encabezados (Headers):** Metadatos clave-valor como `User-Agent`, `Authorization` (Tokens/API Keys), `Content-Type: application/json` y `Accept`.
+- **Cuerpo (Body / Payload):** Datos enviados en solicitudes `POST`, `PUT` o `PATCH` (habitualmente en formato JSON).
+
+##### 2. Estructura de una Respuesta HTTP (Response):
+- **Línea de Estado (Status Line):** Versión HTTP + Código de Estado + Mensaje de Razón (ej. `HTTP/1.1 200 OK`).
+- **Encabezados de Respuesta:** `Content-Type`, `Content-Length`, `Server`, `Set-Cookie`, `Date`.
+- **Cuerpo (Body):** Payload devuelto por el servidor (Documento JSON, XML o HTML).
+
+---
+
+#### C. Códigos de Estado y Mensajes de Error HTTP Detallados
+
+Los códigos de estado HTTP son enteros de 3 dígitos divididos en 5 categorías:
+
+| Rango | Categoría | Significado General |
+| --- | --- | --- |
+| **1xx** | Informativo | La solicitud fue recibida y el proceso continúa. |
+| **2xx** | Éxito | La acción solicitada fue recibida, entendida y aceptada con éxito. |
+| **3xx** | Redirección | Se requieren acciones adicionales para completar la solicitud. |
+| **4xx** | Error del Cliente | La solicitud contiene sintaxis incorrecta o no puede cumplirse. |
+| **5xx** | Error del Servidor | El servidor no pudo cumplir con una solicitud aparentemente válida. |
+
+#### Tabla Detallada de Códigos de Estado y Mensajes de Error:
+
+| Código | Mensaje Estándar | Explicación Técnica y Causa | Solución / Acción de Manejo |
+| --- | --- | --- | --- |
+| `200` | **OK** | Petición exitosa. El recurso solicitado se devuelve en el body. | Procesar la respuesta devuelta normalmente. |
+| `201` | **Created** | Petición exitosa y se ha creado un nuevo recurso. | Usar la URI del recurso devuelto en los encabezados. |
+| `204` | **No Content** | Petición procesada con éxito, pero no hay contenido que devolver. | Confirmar el éxito de operaciones como `DELETE`. |
+| `301` | **Moved Permanently** | La URL solicitada ha sido movida permanentemente a una nueva dirección. | Actualizar las URLs del cliente hacia la nueva ruta. |
+| `304` | **Not Modified** | El recurso no ha cambiado desde la última solicitud (caché). | Utilizar la copia almacenada en la caché local. |
+| `400` | **Bad Request** | Sintaxis inválida, parámetros incorrectos o JSON mal formado en la petición. | Revisar y corregir la estructura de datos enviada. |
+| `401` | **Unauthorized** | Autenticación requerida. Falta la API Key o el Token JWT es inválido o expiró. | Proveer las credenciales correctas en el encabezado o parámetro. |
+| `403` | **Forbidden** | El servidor entiende quién es el cliente, pero este **no tiene permisos** de acceso. | Verificar roles, permisos de usuario o suscripción de la API Key. |
+| `404` | **Not Found** | El recurso o endpoint solicitado **no existe** en el servidor. | Verificar la ortografía de la URL y los parámetros del endpoint. |
+| `429` | **Too Many Requests** | El cliente ha superado el límite de peticiones permitido por la API (*Rate Limit*). | Pausar y aplicar una estrategia de retardo exponencial (*Exponential Backoff*). |
+| `500` | **Internal Server Error** | Ocurrió una excepción no manejada dentro de la lógica del servidor. | Reportar el incidente al administrador del servicio o servidor. |
+| `502` | **Bad Gateway** | El servidor (proxy/Nginx) recibió una respuesta inválida del servidor upstream. | Reintentar la solicitud tras unos segundos. |
+| `503` | **Service Unavailable** | El servidor está temporalmente fuera de servicio por mantenimiento o sobrecarga. | Esperar e implementar políticas de reintento. |
+| `504` | **Gateway Timeout** | El servidor intermediario agotó el tiempo de espera esperando la respuesta del backend. | Aumentar timeouts o verificar el rendimiento de la base de datos backend. |
+
+---
+
+#### D. Manejo Completo de Errores HTTP/HTTPS en Python
+
+En aplicaciones robustas en Python, debemos capturar las excepciones específicas de red (`urllib.error.HTTPError`, `urllib.error.URLError` o `requests.exceptions`) para obtener detalles del código de estado y del cuerpo del error enviado por el servidor:
+
+```python
+import urllib.request
+import urllib.error
+import json
+
+def realizar_peticion_http_segura(url: str):
+    """
+    Realiza una petición HTTPS GET y maneja exhaustivamente todos los posibles
+    códigos de error HTTP y fallos de red.
+    """
+    req = urllib.request.Request(
+        url,
+        headers={
+            'User-Agent': 'MecatronicaPython/1.0',
+            'Accept': 'application/json'
+        }
+    )
+
+    try:
+        print(f"[HTTPS Request] Enviando petición a: {url}")
+        with urllib.request.urlopen(req, timeout=10) as response:
+            status_code = response.status
+            content_type = response.headers.get('Content-Type', '')
+            datos_raw = response.read().decode('utf-8')
+
+            print(f"[HTTPS Response] Código: {status_code} OK | Tipo: {content_type}")
+            datos = json.loads(datos_raw)
+            return datos
+
+    except urllib.error.HTTPError as e:
+        # Errores con respuesta del servidor (Códigos 4xx y 5xx)
+        print(f"\n❌ [HTTPError {e.code}] {e.reason}")
+        print(f"URL afectada: {e.url}")
+
+        # Intentar leer el cuerpo de error devuelto por la API
+        try:
+            error_body = e.read().decode('utf-8')
+            error_json = json.loads(error_body)
+            print(f"Detalle del servidor: {json.dumps(error_json, indent=2)}")
+        except Exception:
+            print(f"Cuerpo de respuesta no parseable: {error_body if 'error_body' in locals() else 'Sin cuerpo'}")
+
+        # Diagnóstico según la categoría del código
+        if e.code == 401:
+            print("👉 Acción requerida: Verifique que la API Key esté bien configurada en su archivo .env")
+        elif e.code == 404:
+            print("👉 Acción requerida: Compruebe que la ruta del endpoint sea correcta.")
+        elif e.code == 429:
+            print("👉 Acción requerida: Ha superado la cuota de peticiones. Espere unos minutos.")
+        elif e.code >= 500:
+            print("👉 Acción requerida: El servidor externo tiene problemas temporales. Reintente luego.")
+
+    except urllib.error.URLError as e:
+        # Fallos de red a bajo nivel (DNS, sin conexión a internet, rechazo de conexión)
+        print(f"\n❌ [URLError] No se pudo establecer la conexión: {e.reason}")
+        print("👉 Verifique su conexión a internet o la configuración DNS del sistema.")
+
+    except json.JSONDecodeError as e:
+        print(f"\n❌ [JSONDecodeError] La respuesta recibida no es un JSON válido: {e}")
+
+    except Exception as e:
+        print(f"\n❌ [Error Inesperado] {type(e).__name__}: {e}")
+
+    return None
+
+# Ejemplo de prueba con una URL intencionadamente errónea (Endpoint 404)
+if __name__ == "__main__":
+    url_prueba = "https://api.geoapify.com/v1/geocode/invalid_endpoint"
+    realizar_peticion_http_segura(url_prueba)
+```
+
+---
+
+#### E. Otros Protocolos de Capa de Aplicación e IoT
+
+#### A. MQTT (Message Queuing Telemetry Transport)
 - Protocolo ultraligero de **Publicación/Suscripción** (Pub/Sub) sobre TCP/IP.
 - Diseñado para redes con ancho de banda limitado y dispositivos embebidos con energía restringida.
-- **Componentes:** *Broker* (servidor central), *Publishers* (emisores de datos) y *Subscribers* (receptores).
+- **Componentes:** *Broker* (servidor central ej. Mosquitto), *Publishers* (emisores de telemetría) y *Subscribers* (receptores).
 
-#### C. WebSockets
+#### B. WebSockets
 - Canal de comunicación **Full-Duplex** bidireccional y persistente sobre una sola conexión TCP.
-- **Uso:** Telemetría en tiempo real hacia interfaces gráficas y páginas web.
+- **Uso:** Telemetría en tiempo real hacia interfaces gráficas y aplicaciones web de monitoreo físico.
 
 ---
 
@@ -307,7 +573,45 @@ Se proveen **dos versiones** del ejercicio:
 
 ---
 
-### 3.1 Arquitectura del Flujo de Datos
+### 3.1 Obtención de API Keys y Configuración de `.env`
+
+Para ejecutar las solicitudes hacia los servicios externos de **Geoapify** y **OpenWeatherMap**, se requiere disponer de las llaves de acceso (API Keys).
+
+#### A. ¿Cómo obtener la API Key de Geoapify (Reverse Geocoding)?
+1. Ingrese al sitio oficial de [Geoapify](https://www.geoapify.com/) y haga clic en **Sign Up** o diríjase a la plataforma de desarrolladores [Geoapify MyProjects](https://myprojects.geoapify.com/).
+2. Cree una cuenta gratuita de desarrollador.
+3. En la sección **Projects**, seleccione el proyecto por defecto o cree uno nuevo.
+4. Copie la **API Key** generada para su proyecto.
+
+#### B. ¿Cómo obtener la API Key de OpenWeatherMap (Air Pollution AQI)?
+1. Ingrese al portal web de [OpenWeatherMap](https://openweathermap.org/) y cree una cuenta gratuita.
+2. Una vez iniciada la sesión, acceda a su perfil y seleccione la pestaña [API Keys](https://home.openweathermap.org/api_keys).
+3. Encontrará una **Key** generada automáticamente (o bien puede presionar **Generate** para crear una nueva).
+4. Copie la clave alfanumérica de 32 caracteres.
+
+#### C. Configuración de Variables de Entorno (`.env`) y Seguridad con `.gitignore`
+Para evitar exponer claves privadas en repositorios públicos de control de versiones como Git, creamos un archivo `.env` en la raíz del proyecto basándonos en la plantilla `.env.example`:
+
+```bash
+# Crear el archivo de entorno desde la plantilla de ejemplo
+cp .env.example .env
+```
+
+Edite el archivo `.env` asignando sus API Keys correspondientes:
+
+```env
+# API Key de Geoapify (Reverse Geocoding / Autocomplete)
+AUTOCOMPLETE_API_KEY=tu_api_key_de_geoapify_aqui
+
+# API Key de OpenWeatherMap (Air Pollution AQI)
+AIR_QUALITY_API_KEY=tu_api_key_de_openweathermap_aqui
+```
+
+> **Seguridad:** El archivo `.env` contiene información confidencial y se encuentra excluido del control de versiones mediante el archivo `.gitignore` (`.env`, `*.env`), garantizando la protección de las llaves de acceso.
+
+---
+
+### 3.2 Arquitectura del Flujo de Datos
 
 El flujo que implementa este ejercicio refleja la interacción entre los servicios web de `aqi-react-app`:
 
@@ -340,7 +644,7 @@ El flujo que implementa este ejercicio refleja la interacción entre los servici
 
 ---
 
-### 3.2 Versión 1: Proyecto Modular de Python con Poetry
+### 3.3 Versión 1: Proyecto Modular de Python con Poetry
 
 Estructura de archivos ubicada en [aqi_poetry_project/](file:///d:/Materiales%20de%20Auxiliar/1.%20Lenguaje%20de%20Programacion%20Visual/aqi_poetry_project):
 
@@ -367,7 +671,6 @@ packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-requests = "^2.31.0"
 
 [tool.poetry.scripts]
 start = "src.main:main"
@@ -416,7 +719,9 @@ class Location:
 
 #### Módulo `src/services.py`
 ```python
-import requests
+import urllib.request
+import urllib.error
+import json
 from typing import Dict, Any
 from .location import Location
 
@@ -428,21 +733,24 @@ class ReverseGeocodeService:
 
     def get_readable_location(self, location: Location) -> str:
         lat, lon = location.to_tuple()
-        params = {"lat": lat, "lon": lon, "apiKey": self.__api_key}
+        url = f"{self.__endpoint}?lat={lat}&lon={lon}&apiKey={self.__api_key}"
 
         try:
-            response = requests.get(self.__endpoint, params=params, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                features = data.get("features", [])
-                if features:
-                    props = features[0].get("properties", {})
-                    return props.get("formatted", "Ubicación desconocida")
-                return "Ubicación no encontrada"
-            else:
-                raise RuntimeError(f"Error en Geoapify API. Código HTTP: {response.status_code}")
-        except requests.RequestException as e:
-            raise RuntimeError(f"Error de red al conectar con Geoapify: {e}")
+            req = urllib.request.Request(url, headers={'User-Agent': 'PythonAQIMonitor/1.0'})
+            with urllib.request.urlopen(req) as response:
+                if response.status == 200:
+                    data = json.loads(response.read().decode('utf-8'))
+                    features = data.get("features", [])
+                    if features:
+                        props = features[0].get("properties", {})
+                        return props.get("formatted", "Ubicación desconocida")
+                    return "Ubicación no encontrada"
+                else:
+                    raise RuntimeError(f"Error en Geoapify API. Código HTTP: {response.status}")
+        except urllib.error.URLError as e:
+            raise RuntimeError(f"Error de red al conectar con Geoapify: {e.reason}")
+        except Exception as e:
+            raise RuntimeError(f"Error inesperado en Reverse Geocoding: {e}")
 
 
 class AirQualityService:
@@ -473,29 +781,45 @@ class AirQualityService:
 
     def fetch_air_quality(self, location: Location) -> Dict[str, Any]:
         lat, lon = location.to_tuple()
-        params = {"lat": lat, "lon": lon, "appid": self.__api_key}
+        url = f"{self.__endpoint}?lat={lat}&lon={lon}&appid={self.__api_key}"
 
         try:
-            response = requests.get(self.__endpoint, params=params, timeout=10)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                raise RuntimeError(f"Error en OpenWeatherMap API. Código HTTP: {response.status_code}")
-        except requests.RequestException as e:
-            raise RuntimeError(f"Error de red al conectar con OpenWeatherMap: {e}")
+            req = urllib.request.Request(url, headers={'User-Agent': 'PythonAQIMonitor/1.0'})
+            with urllib.request.urlopen(req) as response:
+                if response.status == 200:
+                    data = json.loads(response.read().decode('utf-8'))
+                    return data
+                else:
+                    raise RuntimeError(f"Error en OpenWeatherMap API. Código HTTP: {response.status}")
+        except urllib.error.URLError as e:
+            raise RuntimeError(f"Error de red al conectar con OpenWeatherMap: {e.reason}")
+        except Exception as e:
+            raise RuntimeError(f"Error al consultar calidad del aire: {e}")
 ```
 
 #### Módulo `src/main.py`
 ```python
 import sys
-from .location import Location
-from .services import ReverseGeocodeService, AirQualityService
+
+try:
+    from .location import Location
+    from .services import ReverseGeocodeService, AirQualityService
+except ImportError:
+    try:
+        from src.location import Location
+        from src.services import ReverseGeocodeService, AirQualityService
+    except ImportError:
+        from location import Location
+        from services import ReverseGeocodeService, AirQualityService
 
 class AirQualityMonitorApp:
-    AUTOCOMPLETE_API_KEY = 'e94fd042131f45f18a7a4c89d5b8276d'
-    AIR_QUALITY_API_KEY = '2f9f437fc127edba8c7068fe3bd209f4'
+    # Obtener API Keys estrictamente desde las variables de entorno / archivo .env
+    AUTOCOMPLETE_API_KEY = os.getenv("AUTOCOMPLETE_API_KEY")
+    AIR_QUALITY_API_KEY = os.getenv("AIR_QUALITY_API_KEY")
 
     def __init__(self):
+        if not self.AUTOCOMPLETE_API_KEY or not self.AIR_QUALITY_API_KEY:
+            raise ValueError("Error: Se requieren AUTOCOMPLETE_API_KEY y AIR_QUALITY_API_KEY en el archivo .env")
         self.__geocode_service = ReverseGeocodeService(self.AUTOCOMPLETE_API_KEY)
         self.__aqi_service = AirQualityService(self.AIR_QUALITY_API_KEY)
 
@@ -563,9 +887,26 @@ poetry run start
 
 ---
 
-### 3.3 Versión 2: Notebook Interactivo para Pruebas e Iteración Rápidas
+### 3.4 Versión 2: Notebook Interactivo para Pruebas e Iteración Rápidas
 
-Para realizar pruebas rápidas en entornos como **Jupyter Notebook**, **JupyterLab** o **Google Colab**, se ha creado el archivo [aqi_notebook_test.ipynb](file:///d:/Materiales%20de%20Auxiliar/1.%20Lenguaje%20de%20Programacion%20Visual/aqi_notebook_test.ipynb).
+Para realizar pruebas rápidas e iterativas en entornos como **Jupyter Notebook**, **JupyterLab** o **VS Code**, se ha creado el archivo [aqi_notebook_test.ipynb](file:///d:/Materiales%20de%20Auxiliar/1.%20Lenguaje%20de%20Programacion%20Visual/aqi_notebook_test.ipynb).
+
+#### Comandos Preliminares: Configuración del Entorno Virtual (Conda) y Kernel de Jupyter
+
+Antes de ejecutar las celdas del notebook, active el entorno virtual de la asignatura y registre el Kernel correspondiente en Jupyter ejecutando los siguientes comandos preliminares en la terminal:
+
+```bash
+# 1. Activar el entorno virtual de la materia
+conda activate lpv2026-2
+
+# 2. Instalar ipykernel para integración con Jupyter
+pip install ipykernel
+
+# 3. Registrar el entorno virtual lpv2026-2 como Kernel en Jupyter
+python -m ipykernel install --user --name lpv2026-2 --display-name "Python (lpv2026-2)"
+```
+
+> **Nota:** Al abrir [aqi_notebook_test.ipynb](file:///d:/Materiales%20de%20Auxiliar/1.%20Lenguaje%20de%20Programacion%20Visual/aqi_notebook_test.ipynb) en Jupyter Notebook, JupyterLab o VS Code, seleccione el Kernel denominado **`Python (lpv2026-2)`** para asegurar que el código se ejecute con el entorno virtual del curso.
 
 A continuación se muestra el código ordenado por celdas ejecutables:
 
@@ -654,12 +995,16 @@ print("[OK] Servicios de API cargados exitosamente.")
 
 #### Celda 3: Prueba e Iteración Interactiva de Coordenadas
 ```python
+# Carga de API Keys desde el entorno / archivo .env
+GEO_KEY = os.getenv("AUTOCOMPLETE_API_KEY")
+AQI_KEY = os.getenv("AIR_QUALITY_API_KEY")
+
+if not GEO_KEY or not AQI_KEY:
+    raise ValueError("Error: Debes definir AUTOCOMPLETE_API_KEY y AIR_QUALITY_API_KEY en tu archivo .env")
+
 # Modifica estas coordenadas para probar cualquier ubicación del planeta:
 LAT = -25.2867
 LON = -57.6470
-
-GEO_KEY = 'e94fd042131f45f18a7a4c89d5b8276d'
-AQI_KEY = '2f9f437fc127edba8c7068fe3bd209f4'
 
 loc = Location(LAT, LON)
 geo_service = ReverseGeocodeService(GEO_KEY)
