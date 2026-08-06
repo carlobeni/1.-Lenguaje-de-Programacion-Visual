@@ -97,8 +97,9 @@ class AirQualityMonitorApp:
 
 def main():
     # Coordenadas de prueba: Asunción, Paraguay
-    LATITUD_ASUNCION = -25.2867
-    LONGITUD_ASUNCION = -57.6470
+    # -25.331400275695685, -57.516489297888974
+    LATITUD_ASUNCION = -25.331400275695685
+    LONGITUD_ASUNCION = -57.516489297888974
 
     app = AirQualityMonitorApp()
     app.run(LATITUD_ASUNCION, LONGITUD_ASUNCION)
