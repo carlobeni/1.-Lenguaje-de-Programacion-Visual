@@ -75,37 +75,41 @@ def draw_robot(ax, robot):
         wheel_pos = robot.pos + rot @ np.array([-0.3, y_off])
         ax.add_patch(Circle(wheel_pos, 0.15, color="gray", zorder=4))
 
-robot = MySumoPro([0, 0])
-enemy_pos = random_enemy_position()
-robot.start()
+def run_simulation(number_of_frames=1000):
+    robot = MySumoPro([0, 0])
+    enemy_pos = random_enemy_position()
+    robot.start()
 
-plt.ion()
-fig, ax = plt.subplots(figsize=(6, 6), facecolor='black')
+    plt.ion()
+    fig, ax = plt.subplots(figsize=(6, 6), facecolor='black')
 
-number_of_frames = 1000
+    try:
+        for _ in range(number_of_frames):
+            if not plt.fignum_exists(fig.number):
+                break
+            ax.clear()
+            ax.set_facecolor("black")
+            ax.add_patch(Circle((0, 0), RING_RADIUS, fill=False, edgecolor="white", linewidth=4))
+            
+            # Bloque de control protegido
+            robot.manager(enemy_pos)
+            robot.update()
+            
+            if np.linalg.norm(robot.pos - enemy_pos) < COLLISION_DIST:
+                enemy_pos = random_enemy_position()
 
-try:
-    for _ in range(number_of_frames):
-        ax.clear()
-        ax.set_facecolor("black")
-        ax.add_patch(Circle((0, 0), RING_RADIUS, fill=False, edgecolor="white", linewidth=4))
-        
-        # Bloque de control protegido
-        robot.manager(enemy_pos)
-        robot.update()
-        
-        if np.linalg.norm(robot.pos - enemy_pos) < COLLISION_DIST:
-            enemy_pos = random_enemy_position()
+            draw_robot(ax, robot)
+            ax.add_patch(Circle(enemy_pos, ENEMY_RADIUS, color="red"))
+            ax.set_xlim(-11, 11); ax.set_ylim(-11, 11); ax.axis("off")
+            plt.pause(0.01)
 
-        draw_robot(ax, robot)
-        ax.add_patch(Circle(enemy_pos, ENEMY_RADIUS, color="red"))
-        ax.set_xlim(-11, 11); ax.set_ylim(-11, 11); ax.axis("off")
-        plt.pause(0.01)
+    except ValueError as e:
+        print(f"Error crítico en el sistema de control: {e}")
+    except Exception as e:
+        print(f"Error inesperado: {e}")
+    finally:
+        plt.ioff()
+        plt.show()
 
-except ValueError as e:
-    print(f"Error crítico en el sistema de control: {e}")
-except Exception as e:
-    print(f"Error inesperado: {e}")
-finally:
-    plt.ioff()
-    plt.show()
+if __name__ == "__main__":
+    run_simulation()

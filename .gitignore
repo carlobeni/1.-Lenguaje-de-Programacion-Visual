@@ -1,2 +1,4 @@
 *.pdf
 Plan de clases 2026-02.pdf
+__pycache__/
+*.pyc
